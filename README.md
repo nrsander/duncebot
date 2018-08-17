@@ -1,0 +1,2 @@
+# duncebot
+NS DunceBot (alpha)
