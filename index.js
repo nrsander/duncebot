@@ -24,7 +24,7 @@ const setTitle    = require('node-bash-title')
 
 //////////////////////////////////////////////////////////////////////////////////
 // https://www.binance.com/restapipub.html
-// REPLACE xxx with your own API key key and secret.
+// Do not expose these on Github or you will be hacked.
 //
 const APIKEY = 'xxx'
 const APISECRET = 'xxx'
@@ -52,61 +52,61 @@ let init_buy_filled = false
 
 //////////////////////////////////////////////////////////////////////////////////
 
-// Binance API initialization //
+// Initialize the Binance API //
 const client = binance({apiKey: APIKEY, apiSecret: APISECRET, useServerTime: true})
 
 const conf = new Configstore('nbt')
-let base_currency = conf.get('nbt.base_currency')?conf.get('nbt.base_currency'):"USDT"
+let base_currency = conf.get('nbt.base_currency')?conf.get('nbt.base_currency'):"BTC"
 let budget = conf.get('nbt.budget')?parseFloat(conf.get('nbt.budget')):1.00
 let fixed_buy_price = conf.get('nbt.fixed_buy_price')?parseFloat(conf.get('nbt.fixed_buy_price')):0.00
-let currency_to_buy = conf.get('nbt.currency_to_buy')?conf.get('nbt.currency_to_buy'):"BTC"
+let currency_to_buy = conf.get('nbt.currency_to_buy')?conf.get('nbt.currency_to_buy'):"ETH"
 let profit_pourcent = conf.get('nbt.profit_pourcent')?conf.get('nbt.profit_pourcent'):0.80
 let loss_pourcent = conf.get('nbt.loss_pourcent')?conf.get('nbt.loss_pourcent'):0.40
 let trailing_pourcent = conf.get('nbt.trailing_pourcent')?conf.get('nbt.trailing_pourcent'):0.40
 
 clear()
 
-console.log(chalk.yellow(figlet.textSync('_N_B_T_', { horizontalLayout: 'fitted' })))
+console.log(chalk.yellow(figlet.textSync('_C_D_B_', { horizontalLayout: 'fitted' })))
 console.log(' ')
 console.log(" 🐬 ".padEnd(10) + '                   ' + " 🐬 ".padStart(11))
-console.log(" 🐬 ".padEnd(10) + chalk.bold.underline.cyan('Node Binance Trader') + " 🐬 ".padStart(11))
+console.log(" 🐬 ".padEnd(10) + chalk.bold.underline.cyan('Crypto DunceBot    ') + " 🐬 ".padStart(11))
 console.log(" 🐬 ".padEnd(10) + '                   ' + " 🐬 ".padStart(11))
 console.log(' ')
-console.log(chalk.yellow('  ⚠️  USE THIS APP AT YOUR OWN RISK ⚠️'))
+console.log(chalk.yellow('  ⚠️  USE DUNCEBOT AT YOUR OWN RISK ⚠️'))
 console.log(' ')
 
 var buy_info_request = [
   {
     type: 'input',
     name: 'base_currency',
-    message: chalk.cyan('What base currency would you use for the trade? (USDT, BTC, BNB or ETH)'),
+    message: chalk.cyan('What base currency for this trade?  (USDT, BTC, BNB or ETH)'),
     default: base_currency,
     validate: function(value) {
       var valid = ((value.toUpperCase()==='BTC')||(value.toUpperCase()==='USDT')||(value.toUpperCase()==='ETH')||(value.toUpperCase()==='BNB'))
-      return valid || 'Currency not valid, please chose between USDT, BTC, BNB, ETH'
+      return valid || 'Currency not valid, please chose between BTC, USDT, ETH, or BNB'
     },
   },
   {
     type: 'input',
     name: 'budget',
     default: budget,
-    message: chalk.cyan('What is your budget for this trade? (in base currency)(total value. > 15 USD.)'),
+    message: chalk.cyan('What is the budget, in base currency, for this trade?  (>15 USD)'),
     validate: function(value) {
       var valid = !isNaN(parseFloat(value)) && (value>0)
-      return valid || 'Please enter a number superior than 0'
+      return valid || 'Please enter a number greater than 0'
     },
     filter: Number
   },
   {
     type: 'input',
     name: 'currency_to_buy',
-    message: chalk.cyan('What currency would you like to buy?'),
+    message: chalk.cyan('Buy which coin?'),
     default: currency_to_buy,
   },
 ]
 
 
-const report = ora(chalk.grey('Starting the trade...'))
+const report = ora(chalk.grey('Executing the trade...'))
 
 ask_pair_budget = () => {
   inquirer.prompt(buy_info_request).then(answers => {
@@ -134,13 +134,13 @@ ask_pair_budget = () => {
           ask_price = parseFloat(results.asks[0].price)
           console.log( chalk.grey(moment().format('h:mm:ss').padStart(8))
             + chalk.yellow(pair.padStart(10))
-            + chalk.grey(" CURRENT 1ST BID PRICE: " + bid_price ))
+            + chalk.grey(" CURRENT TOP BID PRICE: " + bid_price ))
           fixed_buy_price_input[0].default = results.bids[0].price
           ask_buy_sell_options()
         })
       }
       else {
-        console.log(chalk.magenta("SORRY THE PAIR ") + chalk.green(pair) + chalk.magenta(" IS UNKNOWN BY BINANCE. Please try another one."))
+        console.log(chalk.magenta("Whoops, the pair ") + chalk.green(pair) + chalk.magenta(" is unknown to Binance. Maybe try typing it correctly?"))
         ask_pair_budget()
       }
     })
@@ -151,13 +151,13 @@ var buy_sell_options = [
   {
     type: 'list',
     name: 'buy_option',
-    message: chalk.cyan('How would you like to buy:'),
-    choices: ['Buy at Market Price', 'Set a Buy Order just above Bid Price', 'Set a Buy Order at a Fixed Buy Price'],
+    message: chalk.cyan('How shall I buy?'),
+    choices: ['Buy at Market Price', 'Frontrun the top Bid Price', 'Set a Buy Order at a Fixed Buy Price'],
   },
   {
     type: 'list',
     name: 'sell_option',
-    message: chalk.cyan('How would you like to sell:'),
+    message: chalk.cyan('How shall I sell?'),
     choices: ['Set a Trailing Stop Loss', 'Set Stop Loss and Profit Percentages'],
   },
 ]
@@ -202,10 +202,10 @@ var fixed_buy_price_input = [
     type: 'input',
     name: 'fixed_buy_price',
     default: fixed_buy_price,
-    message: chalk.cyan('What is Fixed Buy Price? (in base currency)'),
+    message: chalk.cyan('What shall the Fixed Buy Price be?  (in base currency)'),
     validate: function(value) {
       var valid = !isNaN(parseFloat(value)) && (value>0)
-      return valid || 'Please enter a number superior than 0'
+      return valid || 'Please enter a number greater than 0'
     },
     filter: Number
   }
@@ -217,7 +217,7 @@ ask_fixed_buy_price = (sell_option) => {
     conf.set('nbt.fixed_buy_price', answers.fixed_buy_price)
     fixed_buy_price = parseFloat(answers.fixed_buy_price)
     fixed_buy_price_input[0].default = fixed_buy_price
-    console.log(chalk.grey("The bot will set a buy order at " + fixed_buy_price))
+    console.log(chalk.grey("Okay, I will set a buy order at " + fixed_buy_price))
     if (sell_option.includes("Trailing")) {
       selling_method = "Trailing"
       ask_trailing_percent()
@@ -234,7 +234,7 @@ var loss_profit_inputs = [
     type: 'input',
     name: 'loss_pourcent',
     default: loss_pourcent,
-    message: chalk.hex('#FF6347')('Enter the stop loss percentage:'),
+    message: chalk.hex('#FF6347')('What shall be our stop-loss percentage?  (type nominal percentage)'),
     validate: function(value) {
       var valid = !isNaN(parseFloat(value)) && (value>0.10) && (value<100.00)
       return valid || 'Please enter a number between 0.10 and 99.99'
@@ -245,7 +245,7 @@ var loss_profit_inputs = [
     type: 'input',
     name: 'profit_pourcent',
     default: profit_pourcent,
-    message: chalk.hex('#3CB371')('Enter the profit percentage:'),
+    message: chalk.hex('#3CB371')('What shall our profit percentage be?'),
     validate: function(value) {
       var valid = !isNaN(parseFloat(value)) && (value>0.10) && (value<100.00)
       return valid || 'Please enter a number between 0.10 and 99.99'
@@ -255,7 +255,7 @@ var loss_profit_inputs = [
   {
     type: 'confirm',
     name: 'confirm',
-    message: chalk.cyan('Start the trade now?'),
+    message: chalk.cyan('Okay, shall I start the trade now?'),
     default: true
   },
 ]
@@ -284,7 +284,7 @@ var trailing_loss_input = [
     type: 'input',
     name: 'trailing_pourcent',
     default: trailing_pourcent,
-    message: chalk.hex('#FF6347')('Enter the Trailing Loss Percentage:'),
+    message: chalk.hex('#FF6347')('What shall our Trailing Loss Percentage be?  (type nominal percentage)'),
     validate: function(value) {
       var valid = !isNaN(parseFloat(value)) && (value>0.10) && (value<100.00)
       return valid || 'Please enter a number between 0.10 and 99.99'
@@ -294,7 +294,7 @@ var trailing_loss_input = [
   {
     type: 'confirm',
     name: 'confirm',
-    message: chalk.cyan('Start the trade now?'),
+    message: chalk.cyan('Okay, shall I start the trade now?'),
     default: true
   },
 ]
@@ -341,7 +341,7 @@ start_trading = () => {
   else if (buying_method === "Bid") {
     buy_amount = (( ((parseFloat(budget) / (parseFloat(bid_price) * 1.0002)) / parseFloat(stepSize)) | 0 ) * parseFloat(stepSize)).toFixed(precision)
     buy_price = parseFloat(bid_price) * 1.0002
-    console.log(chalk.grey("BUYING " + buy_amount + " OF " + currency_to_buy + " AT JUST ABOVE 1ST BID PRICE ") + chalk.green(buy_price.toFixed(tickSize)))
+    console.log(chalk.grey("FRONTRUNNING THE BID PRICE TO BUY " + buy_amount + " OF " + currency_to_buy + " ... ") + chalk.green(buy_price.toFixed(tickSize)))
     client.order({
       symbol: pair,
       side: 'BUY',
@@ -389,7 +389,7 @@ auto_trade = () => {
   // LISTEN TO KEYBOARD PRSEED KEYS
   process.stdin.resume()
   process.stdin.setRawMode(true)
-  console.log(chalk.grey(" ⚠️  Press [ CTRL + c ] or q to cancel the trade and sell everything at market price. ⚠️ "))
+  console.log(chalk.grey(" ⚠️  Press [ CTRL + c ] or q to cancel the trade and dump everything at market price. ⚠️ "))
   console.log(" ")
   const curr_trade = trade_count
   const clean_trades = client.ws.trades([pair], trade => {
@@ -476,7 +476,7 @@ auto_trade = () => {
       })
       .catch((error) => {
         pnl = 100.00*(buy_price - trade.price)/buy_price
-        var log_report = chalk.magenta(" LOSS PRICE REACHED THE BOT SHOULD HAVE SOLD EVERYTHING #454 ")
+        var log_report = chalk.magenta(" LOSS PRICE REACHED - I SHOULD HAVE SOLD EVERYTHING!!!  ERROR #454 ")
         report.fail(add_status_to_trade_report(trade, log_report))
         reset_trade()
         setTimeout( () => { ask_pair_budget(), 1000 } )
@@ -493,14 +493,14 @@ auto_trade = () => {
       })
       .then( (order_result) => {
         if ( parseFloat(order_result.executedQty) < parseFloat(order_result.origQty) ) {
-          var log_report = chalk.grey(" PROFIT PRICE REACHED BUT NOT ALL EXECUTED " + order_result.executedQty )
+          var log_report = chalk.grey(" PROFIT PRICE REACHED BUT NOT ALL EXECUTED!!! " + order_result.executedQty )
           report.text = add_status_to_trade_report(trade, log_report)
           step = 5
         }
         else {
           clean_trades()
           pnl = 100.00*(trade.price - buy_price)/buy_price
-          var log_report = chalk.greenBright(" 🐬 !!! WE HAVE A WINNER !!! 🐬 ")
+          var log_report = chalk.greenBright(" 🐬 !!! DUNCEBOT HAS A WINNER !!! 🐬 ")
           report.text = add_status_to_trade_report(trade, log_report)
           reset_trade()
           report.succeed()
@@ -561,7 +561,7 @@ sell_at_market_price = () => {
   })
   .then( order => {
     reset_trade()
-    report.succeed( chalk.magenta(" THE BOT SOLD AT MARKET PRICE #777 ") )
+    report.succeed( chalk.magenta(" I SOLD AT MARKET PRICE #777 ") )
     setTimeout( () => { ask_pair_budget(), 2500 } )
   })
   .catch( error => {
@@ -620,9 +620,9 @@ set_stop_loss_order = () => {
     step = 3
   })
   .catch((error) => {
-    console.error(" ERRROR #1233 STOP PRICE (" + stop_price + ") " + error )
+    console.error(" ERROR #1233 STOP PRICE (" + stop_price + ") " + error )
     if (String(error).includes("MIN_NOTIONAL")) {
-      console.error("⚠️  PLEASE MAKE SURE YOUR BUDGET VALUE IS SUPERIOR THAN 15 USD ⚠️")
+      console.error("⚠️  Sorry, Poor Boy ... A BINANCE TRADE MUST BE WORTH > 15 USD!!! ⚠️")
     }
     sell_at_market_price()
   })
@@ -698,7 +698,7 @@ process.stdin.on('keypress', ( key ) => {
             else {
               sell_at_market_price()
               reset_trade()
-              report.succeed( chalk.magenta(" THE BOT STOPPED THE TRADE #3365 ") )
+              report.succeed( chalk.magenta(" I HAVE STOPPED THE TRADE #3365 ") )
               setTimeout( () => { ask_pair_budget(), 2500 } )
             }
           }

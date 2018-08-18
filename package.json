@@ -8,10 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "binance",
-    "cryptocurrency",
-    "trading",
-    "bot"
+    "duncebot"
   ],
   "author": "Herve Fulchiron <herve76@gmail.com>",
   "license": "ISC",
