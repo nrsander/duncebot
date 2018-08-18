@@ -22,12 +22,17 @@ const binance     = require('binance-api-node').default
 const inquirer    = require("inquirer")
 const setTitle    = require('node-bash-title')
 
+// DO NOT UPLOAD THIS TO FUCKING GITHUB AGAIN:
+const configvars    = require('config.json')
+
 //////////////////////////////////////////////////////////////////////////////////
 // https://www.binance.com/restapipub.html
 // Do not expose these on Github or you will be hacked.
 //
-const APIKEY = 'xxx'
-const APISECRET = 'xxx'
+//const APIKEY = process.env.BINANCE_PUBLIC_KEY
+//const APISECRET = process.env.BINANCE_PRIVATE_KEY
+const APIKEY = configvars.BINANCE_PUBLIC_KEY
+const APISECRET = configvars.BINANCE_PRIVATE_KEY
 //////////////////////////////////////////////////////////////////////////////////
 
 let pnl = 0
